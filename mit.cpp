@@ -102,7 +102,6 @@ void mit::load_readings(string filename)
 point mit::calculate_offset_vector()
 {
     point result_offset_vector;
-    vector<point> offset_vectors;
     for (size_t depth = 0; depth < readings.size(); depth++)
     {
 
@@ -138,7 +137,6 @@ point mit::calculate_offset_vector()
         }
         average_offset_vector_at_depth.x /= no_of_fingers;
         average_offset_vector_at_depth.y /= no_of_fingers;
-        offset_vectors.push_back(average_offset_vector_at_depth);
 
         result_offset_vector.x += average_offset_vector_at_depth.x;
         result_offset_vector.y += average_offset_vector_at_depth.y;
