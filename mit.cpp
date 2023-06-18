@@ -4,6 +4,9 @@ using namespace std;
 mit::mit(const int no_of_fingers,
          const double pipe_diameter_mm,
          const double distance_between_samples_mm)
+    : no_of_fingers(no_of_fingers), pipe_diameter(pipe_diameter_mm),
+      pipe_radius(pipe_diameter_mm / 2.0),
+      distance_between_samples_mm(distance_between_samples_mm)
 {
     if (no_of_fingers < 1)
     {
@@ -42,7 +45,7 @@ mit::mit(const int no_of_fingers,
          << distance_between_samples_mm << " mm distance between samples" << endl;
 }
 
-void mit::load_data(string filename)
+void mit::load_readings(string filename)
 {
     ifstream inputFile(filename);
     if (inputFile.is_open())
@@ -51,13 +54,15 @@ void mit::load_data(string filename)
         // Read data line by line
         while (getline(inputFile, line))
         {
-            vector<double> finger_readings_at_depth;
+            vector<reading> finger_readings_at_depth;
+            reading r;
             double distance;
             stringstream ss(line);
             while (ss >> distance)
             {
 
-                finger_readings_at_depth.push_back(distance);
+                r.distance = distance;
+                finger_readings_at_depth.push_back(r);
             }
             readings.push_back(finger_readings_at_depth);
         }
@@ -88,14 +93,8 @@ void mit::load_data(string filename)
 
 point mit::calculate_offset_vector()
 {
-    /*
-    1. Assume we are the origin (0,0). Doesnt matter. We are the tool looking for the center of the pipe.
-    2. Calculate expected reading vector for finger i (we have angle for i, and have expected radius)
-    3. Calculatae vector to actual reading as well with angle and the distance reading
-    4. Get difference expected - actual vector
-    5. Get average these difference vectors
-    */
-    vector<point> difference_vectors_at_depth;
+    point result_offset_vector;
+    vector<point> offset_vectors;
     for (size_t depth = 0; depth < readings.size(); depth++)
     {
 
@@ -104,47 +103,88 @@ point mit::calculate_offset_vector()
         {
             double cos_value = cos_values[finger];
             double sin_value = sin_values[finger];
-            point expected_reading;
-            expected_reading.x = cos_value * pipe_radius;
-            expected_reading.y = sin_value * pipe_radius;
+            point expected_contact_point;
+            expected_contact_point.x = cos_value * pipe_radius;
+            expected_contact_point.y = sin_value * pipe_radius;
 
-            point actual_reading;
-            double reading_distance = readings[depth][finger];
-            actual_reading.x = cos_value * reading_distance;
-            actual_reading.y = sin_value * reading_distance;
-
+            point actual_contact_point;
+            double reading_distance = readings[depth][finger].distance;
+            actual_contact_point.x = cos_value * reading_distance;
+            actual_contact_point.y = sin_value * reading_distance;
+            readings[depth][finger].contact_point = actual_contact_point; // Store the contact point w.r.t. the tool
+            // Print out actual reading vs expected reading
             point offset_vector;
-            offset_vector.x = expected_reading.x - actual_reading.x;
-            offset_vector.y = expected_reading.y - actual_reading.y;
+            offset_vector.x = expected_contact_point.x - actual_contact_point.x;
+            offset_vector.y = expected_contact_point.y - actual_contact_point.y;
 
             average_offset_vector_at_depth.x += offset_vector.x;
             average_offset_vector_at_depth.y += offset_vector.y;
         }
         average_offset_vector_at_depth.x /= no_of_fingers;
         average_offset_vector_at_depth.y /= no_of_fingers;
-        difference_vectors_at_depth.push_back(average_offset_vector_at_depth);
-        // cout << "Depth: " << depth << " Offset vector: (" << average_offset_vector_at_depth.x << ", " << average_offset_vector_at_depth.y << ")" << endl;
+        offset_vectors.push_back(average_offset_vector_at_depth);
     }
 
-    point average_offset_vector;
-    for (size_t i = 0; i < difference_vectors_at_depth.size(); i++)
+    // Average the offset vectors
+    for (size_t i = 0; i < offset_vectors.size(); i++)
     {
-        average_offset_vector.x += difference_vectors_at_depth[i].x;
-        average_offset_vector.y += difference_vectors_at_depth[i].y;
+        result_offset_vector.x += offset_vectors[i].x;
+        result_offset_vector.y += offset_vectors[i].y;
     }
 
-    average_offset_vector.x /= difference_vectors_at_depth.size();
-    average_offset_vector.y /= difference_vectors_at_depth.size();
-    return average_offset_vector;
+    result_offset_vector.x /= offset_vectors.size();
+    result_offset_vector.y /= offset_vectors.size();
+
+    return result_offset_vector;
 }
 
 void mit::centralize_readings(point offset_vector)
 {
-    // Reverse the offset on the tool which we assumed initially to be at (0,0)
+    // Calculate pipe center estimate
+    // because the offset vector is from the true pipe center estimate to the tool.
+    // We assumed the tool to be at (0,0), so we need to add the offset vector instead of subtracting it.
+    point pipe_center_estimate;
+    pipe_center_estimate.x = offset_vector.x;
+    pipe_center_estimate.y = offset_vector.y;
+
+    clog << "* Pipe center estimate: (" << pipe_center_estimate.x << ", " << pipe_center_estimate.y << ")" << endl;
+
+    // Centralize readings
     for (size_t depth = 0; depth < readings.size(); depth++)
     {
         for (size_t finger = 0; finger < readings[0].size(); finger++)
         {
+            point contact_point = readings[depth][finger].contact_point;
+            readings[depth][finger].centralized_distance = calculate_distance(pipe_center_estimate, contact_point);
         }
     }
+}
+
+void mit::save_readings(string filename)
+{
+    ofstream outputFile(filename);
+    if (outputFile.is_open())
+    {
+        for (size_t depth = 0; depth < readings.size(); depth++)
+        {
+            for (size_t finger = 0; finger < readings[0].size(); finger++)
+            {
+                outputFile << readings[depth][finger].centralized_distance << " ";
+            }
+            outputFile << endl;
+        }
+        outputFile.close();
+        clog << "* Saved readings to " << filename << endl;
+    }
+    else
+    {
+        cerr << "* Unable to open readings file" << endl;
+    }
+}
+
+double mit::calculate_distance(point a, point b)
+{
+    double dx = b.x - a.x;
+    double dy = b.y - a.y;
+    return sqrt(dx * dx + dy * dy);
 }
