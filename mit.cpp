@@ -94,6 +94,7 @@ void mit::load_readings(string filename)
 point mit::calculate_offset_vector()
 {
     point result_offset_vector;
+    vector<point> offset_vectors;
     for (size_t depth = 0; depth < readings.size(); depth++)
     {
 
@@ -119,23 +120,32 @@ point mit::calculate_offset_vector()
             average_offset_vector_at_depth.x += offset_vector.x;
             average_offset_vector_at_depth.y += offset_vector.y;
         }
-
-        result_offset_vector.x += average_offset_vector_at_depth.x / no_of_fingers;
-        result_offset_vector.y += average_offset_vector_at_depth.y / no_of_fingers;
+        average_offset_vector_at_depth.x /= no_of_fingers;
+        average_offset_vector_at_depth.y /= no_of_fingers;
+        offset_vectors.push_back(average_offset_vector_at_depth);
     }
 
-    result_offset_vector.x /= readings.size();
-    result_offset_vector.y /= readings.size();
-    clog << "* Offset vector: (" << result_offset_vector.x << ", " << result_offset_vector.y << ")" << endl;
+    // Average the offset vectors
+    for (size_t i = 0; i < offset_vectors.size(); i++)
+    {
+        result_offset_vector.x += offset_vectors[i].x;
+        result_offset_vector.y += offset_vectors[i].y;
+    }
+
+    result_offset_vector.x /= offset_vectors.size();
+    result_offset_vector.y /= offset_vectors.size();
+
     return result_offset_vector;
 }
 
 void mit::centralize_readings(point offset_vector)
 {
-    // Reverse the offset on the tool which we assumed initially to be at (0,0)
+    // Calculate pipe center estimate
+    // because the offset vector is from the true pipe center estimate to the tool.
+    // We assumed the tool to be at (0,0), so we need to add the offset vector instead of subtracting it.
     point pipe_center_estimate;
-    pipe_center_estimate.x = -offset_vector.x;
-    pipe_center_estimate.y = -offset_vector.y;
+    pipe_center_estimate.x = offset_vector.x;
+    pipe_center_estimate.y = offset_vector.y;
 
     clog << "* Pipe center estimate: (" << pipe_center_estimate.x << ", " << pipe_center_estimate.y << ")" << endl;
 
