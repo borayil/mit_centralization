@@ -31,7 +31,7 @@ public:
         const double distance_between_samples_mm);
     void load_data(const std::string filename);
     point calculate_offset_vector();
-    void centralize_readings(point offset_vector)
+    void centralize_readings(point offset_vector);
 };
 
 #endif // __CALIPER_TOOL_H__
