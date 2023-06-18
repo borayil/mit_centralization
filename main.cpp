@@ -12,8 +12,11 @@ static const std::string slash = "/";
 int main()
 {
     mit caliper_tool(40, 254, 5);
-    caliper_tool.load_data("data" + slash + "data.txt");
+    caliper_tool.load_readings("data" + slash + "data.txt");
     point offset_vector = caliper_tool.calculate_offset_vector();
-    cout << "Offset vector: (" << offset_vector.x << ", " << offset_vector.y << ")" << endl;
+    // point offset_vector = caliper_tool.calculate_offset_vector();
+    caliper_tool.centralize_readings(offset_vector);
+    caliper_tool.save_readings("data" + slash + "data_centralized.txt");
+
     return 0;
 }

@@ -58,6 +58,17 @@
     "typeinfo": "cpp",
     "variant": "cpp",
     "vector": "cpp",
-    "__functional_base": "cpp"
+    "__functional_base": "cpp",
+    "__hash_table": "cpp",
+    "__node_handle": "cpp",
+    "array": "cpp",
+    "bit": "cpp",
+    "complex": "cpp",
+    "optional": "cpp",
+    "unordered_map": "cpp",
+    "algorithm": "cpp",
+    "functional": "cpp",
+    "iterator": "cpp",
+    "utility": "cpp"
   }
 }
