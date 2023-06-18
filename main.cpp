@@ -5,6 +5,8 @@
  * Description: This is the main file where we run our program for
  * loading, centralizing, and saving readings from a MIT caliper.
  * Please see mit.cpp for more details on the MIT implementation.
+ * Mathematical visualization of centralization approach:
+ * https://www.geogebra.org/calculator/bs8amyqz
  */
 #include <iostream>
 #include <vector>
@@ -19,6 +21,7 @@ static const std::string slash = "/";
 
 int main()
 {
+
     // Setup
     mit caliper_tool(40, 254, 5);
     caliper_tool.load_readings("data" + slash + "data.txt");
@@ -28,7 +31,7 @@ int main()
     cout << "Tool offset vector from center of pipe: (" << offset_vector.x << ", " << offset_vector.y << ")" << endl;
     cout << "Tool offset distance from center of pipe: " << caliper_tool.calculate_distance({0, 0}, offset_vector) << endl;
     caliper_tool.centralize_readings(offset_vector);
-    // caliper_tool.show_readings(true);
+    caliper_tool.show_readings(true);
     caliper_tool.save_centralized_readings("data" + slash + "data_centralized.txt");
     return 0;
 }

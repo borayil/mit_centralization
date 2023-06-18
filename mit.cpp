@@ -3,6 +3,8 @@
  * Author: Bora Yilmaz
  * Email: borayil00@gmail.com
  * Description: This file contains the implementation of the MIT class.
+ * Mathematical visualization of centralization approach:
+ * https://www.geogebra.org/calculator/bs8amyqz
  */
 #include "mit.h"
 using namespace std;
@@ -123,23 +125,27 @@ point mit::calculate_offset_vector()
             offset_vector.x = expected_contact_point.x - actual_contact_point.x;
             offset_vector.y = expected_contact_point.y - actual_contact_point.y;
 
+            // Based on reading_distance, we can decide on the direction of the offset vector
+            // If reading_distance is less than pipe_radius, then the offset vector should be in the opposite direction
+            // because the finger is closer to the wall rather than the center of the pipe
+            if (reading_distance < pipe_radius)
+            {
+                offset_vector.x *= -1;
+                offset_vector.y *= -1;
+            }
             average_offset_vector_at_depth.x += offset_vector.x;
             average_offset_vector_at_depth.y += offset_vector.y;
         }
         average_offset_vector_at_depth.x /= no_of_fingers;
         average_offset_vector_at_depth.y /= no_of_fingers;
         offset_vectors.push_back(average_offset_vector_at_depth);
+
+        result_offset_vector.x += average_offset_vector_at_depth.x;
+        result_offset_vector.y += average_offset_vector_at_depth.y;
     }
 
-    // Average the offset vectors
-    for (size_t i = 0; i < offset_vectors.size(); i++)
-    {
-        result_offset_vector.x += offset_vectors[i].x;
-        result_offset_vector.y += offset_vectors[i].y;
-    }
-
-    result_offset_vector.x /= offset_vectors.size();
-    result_offset_vector.y /= offset_vectors.size();
+    result_offset_vector.x /= readings.size();
+    result_offset_vector.y /= readings.size();
 
     return result_offset_vector;
 }
