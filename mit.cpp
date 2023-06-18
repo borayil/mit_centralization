@@ -51,13 +51,15 @@ void mit::load_data(string filename)
         // Read data line by line
         while (getline(inputFile, line))
         {
-            vector<double> finger_readings_at_depth;
+            vector<reading> finger_readings_at_depth;
+            reading r;
             double distance;
             stringstream ss(line);
             while (ss >> distance)
             {
 
-                finger_readings_at_depth.push_back(distance);
+                r.distance = distance;
+                finger_readings_at_depth.push_back(r);
             }
             readings.push_back(finger_readings_at_depth);
         }
@@ -109,7 +111,7 @@ point mit::calculate_offset_vector()
             expected_reading.y = sin_value * pipe_radius;
 
             point actual_reading;
-            double reading_distance = readings[depth][finger];
+            double reading_distance = readings[depth][finger].distance;
             actual_reading.x = cos_value * reading_distance;
             actual_reading.y = sin_value * reading_distance;
 
