@@ -1,3 +1,9 @@
+/*
+ * File: main.cpp
+ * Author: Bora Yilmaz
+ * Email: borayil00@gmail.com
+ * Description: This file contains the implementation of the MIT class.
+ */
 #include "mit.h"
 using namespace std;
 
@@ -83,7 +89,7 @@ void mit::load_readings(string filename)
             cos_values.push_back(cos(angle));
             sin_values.push_back(sin(angle));
         }
-        cout << "* Pre-calculated cos and sin values for each finger" << endl;
+        clog << "* Pre-calculated cos and sin values for each finger" << endl;
     }
     else
     {
@@ -141,13 +147,9 @@ point mit::calculate_offset_vector()
 void mit::centralize_readings(point offset_vector)
 {
     // Calculate pipe center estimate
-    // because the offset vector is from the true pipe center estimate to the tool.
-    // We assumed the tool to be at (0,0), so we need to add the offset vector instead of subtracting it.
     point pipe_center_estimate;
-    pipe_center_estimate.x = offset_vector.x;
-    pipe_center_estimate.y = offset_vector.y;
-
-    clog << "* Pipe center estimate: (" << pipe_center_estimate.x << ", " << pipe_center_estimate.y << ")" << endl;
+    pipe_center_estimate.x = -offset_vector.x;
+    pipe_center_estimate.y = -offset_vector.y;
 
     // Centralize readings
     for (size_t depth = 0; depth < readings.size(); depth++)
@@ -160,7 +162,7 @@ void mit::centralize_readings(point offset_vector)
     }
 }
 
-void mit::save_readings(string filename)
+void mit::save_centralized_readings(string filename)
 {
     ofstream outputFile(filename);
     if (outputFile.is_open())
@@ -179,6 +181,36 @@ void mit::save_readings(string filename)
     else
     {
         cerr << "* Unable to open readings file" << endl;
+    }
+}
+
+void mit::show_readings(bool show_centralized_readings)
+{
+    // Format: (depth, finger) = old reading -> new reading
+    cout << fixed;
+    // Show header
+
+    if (show_centralized_readings)
+    {
+        cout << "(depth, finger) = old reading -> new reading" << endl;
+        for (size_t depth = 0; depth < readings.size(); depth++)
+        {
+            for (size_t finger = 0; finger < readings[0].size(); finger++)
+            {
+                cout << "(" << depth << ", " << finger << ") = " << readings[depth][finger].distance << " -> " << readings[depth][finger].centralized_distance << endl;
+            }
+        }
+    }
+    else
+    {
+        cout << "(depth, finger) = old reading" << endl;
+        for (size_t depth = 0; depth < readings.size(); depth++)
+        {
+            for (size_t finger = 0; finger < readings[0].size(); finger++)
+            {
+                cout << "(" << depth << ", " << finger << ") = " << readings[depth][finger].distance << endl;
+            }
+        }
     }
 }
 
