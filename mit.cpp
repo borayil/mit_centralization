@@ -173,16 +173,16 @@ void mit::centralize_readings(const point offset_vector)
         for (size_t finger = 0; finger < readings[0].size(); finger++)
         {
             point contact_point = readings[depth][finger].contact_point;
-            contact_point.x -= offset_vector.x;
-            contact_point.y -= offset_vector.y;
+            contact_point.x += offset_vector.x;
+            contact_point.y += offset_vector.y;
             readings[depth][finger].contact_point = contact_point;
         }
     }
 
     // Calculate pipe center estimate
     point pipe_center_estimate;
-    pipe_center_estimate.x = offset_vector.x;
-    pipe_center_estimate.y = offset_vector.y;
+    pipe_center_estimate.x = -offset_vector.x;
+    pipe_center_estimate.y = -offset_vector.y;
 
     // Centralize readings
     for (size_t depth = 0; depth < readings.size(); depth++)
