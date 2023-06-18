@@ -99,57 +99,86 @@ void mit::load_readings(string filename)
     }
 }
 
-point mit::calculate_offset_vector()
+// TODO, we are not updating contact point for all depths
+// So do that in another function
+point mit::calculate_offset_vector_of_sample(const int depth)
 {
-    point result_offset_vector;
-    for (size_t depth = 0; depth < readings.size(); depth++)
+    point result_offset_vector{0, 0};
+    for (size_t finger = 0; finger < readings[depth].size(); finger++)
     {
+        double cos_value = cos_values[finger];
+        double sin_value = sin_values[finger];
+        point expected_contact_point{0, 0};
+        expected_contact_point.x = cos_value * pipe_radius;
+        expected_contact_point.y = sin_value * pipe_radius;
 
-        point average_offset_vector_at_depth;
-        for (size_t finger = 0; finger < readings[0].size(); finger++)
-        {
-            double cos_value = cos_values[finger];
-            double sin_value = sin_values[finger];
-            point expected_contact_point;
-            expected_contact_point.x = cos_value * pipe_radius;
-            expected_contact_point.y = sin_value * pipe_radius;
+        point actual_contact_point{0, 0};
+        double reading_distance = readings[depth][finger].distance;
+        actual_contact_point.x = cos_value * reading_distance;
+        actual_contact_point.y = sin_value * reading_distance;
 
-            point actual_contact_point;
-            double reading_distance = readings[depth][finger].distance;
-            actual_contact_point.x = cos_value * reading_distance;
-            actual_contact_point.y = sin_value * reading_distance;
-            readings[depth][finger].contact_point = actual_contact_point; // Store the contact point w.r.t. the tool
-            // Print out actual reading vs expected reading
-            point offset_vector;
-            offset_vector.x = expected_contact_point.x - actual_contact_point.x;
-            offset_vector.y = expected_contact_point.y - actual_contact_point.y;
+        point offset_vector{0, 0};
+        offset_vector.x = expected_contact_point.x - actual_contact_point.x;
+        offset_vector.y = expected_contact_point.y - actual_contact_point.y;
 
-            // Based on reading_distance, we can decide on the direction of the offset vector
-            // If reading_distance is less than pipe_radius, then the offset vector should be in the opposite direction
-            // because the finger is closer to the wall rather than the center of the pipe
-            if (reading_distance < pipe_radius)
-            {
-                offset_vector.x *= -1;
-                offset_vector.y *= -1;
-            }
-            average_offset_vector_at_depth.x += offset_vector.x;
-            average_offset_vector_at_depth.y += offset_vector.y;
-        }
-        average_offset_vector_at_depth.x /= no_of_fingers;
-        average_offset_vector_at_depth.y /= no_of_fingers;
-
-        result_offset_vector.x += average_offset_vector_at_depth.x;
-        result_offset_vector.y += average_offset_vector_at_depth.y;
+        result_offset_vector.x += offset_vector.x;
+        result_offset_vector.y += offset_vector.y;
     }
-
-    result_offset_vector.x /= readings.size();
-    result_offset_vector.y /= readings.size();
+    result_offset_vector.x /= no_of_fingers;
+    result_offset_vector.y /= no_of_fingers;
 
     return result_offset_vector;
 }
 
-void mit::centralize_readings(point offset_vector)
+void mit::calculate_contact_points()
 {
+    for (size_t depth = 0; depth < readings.size(); depth++)
+    {
+        for (size_t finger = 0; finger < readings[0].size(); finger++)
+        {
+            double cos_value = cos_values[finger];
+            double sin_value = sin_values[finger];
+            point contact_point{0, 0};
+            contact_point.x = cos_value * readings[depth][finger].distance;
+            contact_point.y = sin_value * readings[depth][finger].distance;
+            readings[depth][finger].contact_point = contact_point;
+        }
+    }
+}
+
+// void mit::centralize_readings(const point offset_vector)
+// {
+//     // Calculate pipe center estimate
+//     point pipe_center_estimate;
+//     pipe_center_estimate.x = -offset_vector.x;
+//     pipe_center_estimate.y = -offset_vector.y;
+
+//     // Centralize readings
+//     for (size_t depth = 0; depth < readings.size(); depth++)
+//     {
+//         for (size_t finger = 0; finger < readings[0].size(); finger++)
+//         {
+//             point contact_point = readings[depth][finger].contact_point;
+//             readings[depth][finger].centralized_distance = calculate_distance(pipe_center_estimate, contact_point);
+//             readings[depth][finger].is_centralized = true;
+//         }
+//     }
+// }
+
+void mit::centralize_readings(const point offset_vector)
+{
+    // Offset the contact points
+    for (size_t depth = 0; depth < readings.size(); depth++)
+    {
+        for (size_t finger = 0; finger < readings[0].size(); finger++)
+        {
+            point contact_point = readings[depth][finger].contact_point;
+            contact_point.x += offset_vector.x;
+            contact_point.y += offset_vector.y;
+            readings[depth][finger].contact_point = contact_point;
+        }
+    }
+
     // Calculate pipe center estimate
     point pipe_center_estimate;
     pipe_center_estimate.x = -offset_vector.x;
@@ -162,6 +191,7 @@ void mit::centralize_readings(point offset_vector)
         {
             point contact_point = readings[depth][finger].contact_point;
             readings[depth][finger].centralized_distance = calculate_distance(pipe_center_estimate, contact_point);
+            readings[depth][finger].is_centralized = true;
         }
     }
 }
