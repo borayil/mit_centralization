@@ -13,6 +13,7 @@
 #include <vector>
 #include <iostream>
 #include <cmath>
+#include "utils.h"
 
 struct point
 {
@@ -49,7 +50,6 @@ public:
     void calculate_contact_points();                            // Calculate contact points of each finger
     void centralize_readings(const point offset_vector);        // Centralize readings with given tool offset
     void show_readings(const bool show_centralized_readings);   // Show initial and centralized readings
-    double calculate_distance(const point a, const point b);    // Calculate distance between two points
 };
 
 #endif // __CALIPER_TOOL_H__

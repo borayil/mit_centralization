@@ -99,8 +99,6 @@ void mit::load_readings(string filename)
     }
 }
 
-// TODO, we are not updating contact point for all depths
-// So do that in another function
 point mit::calculate_offset_vector_of_sample(const int depth)
 {
     point result_offset_vector{0, 0};
@@ -117,12 +115,12 @@ point mit::calculate_offset_vector_of_sample(const int depth)
         actual_contact_point.x = cos_value * reading_distance;
         actual_contact_point.y = sin_value * reading_distance;
 
-        point offset_vector{0, 0};
-        offset_vector.x = expected_contact_point.x - actual_contact_point.x;
-        offset_vector.y = expected_contact_point.y - actual_contact_point.y;
+        point diff_vector{0, 0};
+        diff_vector.x = expected_contact_point.x - actual_contact_point.x;
+        diff_vector.y = expected_contact_point.y - actual_contact_point.y;
 
-        result_offset_vector.x += offset_vector.x;
-        result_offset_vector.y += offset_vector.y;
+        result_offset_vector.x += diff_vector.x;
+        result_offset_vector.y += diff_vector.y;
     }
     result_offset_vector.x /= no_of_fingers;
     result_offset_vector.y /= no_of_fingers;
@@ -130,60 +128,34 @@ point mit::calculate_offset_vector_of_sample(const int depth)
     return result_offset_vector;
 }
 
-void mit::calculate_contact_points()
-{
-    for (size_t depth = 0; depth < readings.size(); depth++)
-    {
-        for (size_t finger = 0; finger < readings[0].size(); finger++)
-        {
-            point contact_point{0, 0};
-            contact_point.x = cos_values[finger] * readings[depth][finger].distance;
-            contact_point.y = sin_values[finger] * readings[depth][finger].distance;
-            readings[depth][finger].contact_point = contact_point;
-        }
-    }
-}
-
 void mit::centralize_readings(const point offset_vector)
 {
-    // When we do (0,0) - offset_vector, we basically undo the offset
-    point pipe_center_estimate{-2 * offset_vector.x, -2 * offset_vector.y};
-
+    // (Note: we had assumed that our pipe was centered at 0,0)
+    // In other words, our tool started at 0,0 and we move it to the center of the pipe now
+    point pipe_center{-offset_vector.x, -offset_vector.y};
     for (size_t depth = 0; depth < readings.size(); depth++)
     {
         for (size_t finger = 0; finger < readings[0].size(); finger++)
         {
-            // Original reading contact point w.r.t. tool at (0, 0)
-            point contact_point = readings[depth][finger].contact_point;
 
-            // Vector from pipe center estimate to its expected contact point
-            point v_expected_contact_point{0, 0};
-            v_expected_contact_point.x = pipe_center_estimate.x + cos_values[finger] * pipe_radius;
-            v_expected_contact_point.y = pipe_center_estimate.y + sin_values[finger] * pipe_radius;
+            // Expected contact point w.r.t. pipe center
+            point expected_contact_point_from_center{0, 0};
+            expected_contact_point_from_center.x = pipe_center.x + cos_values[finger] * pipe_radius;
+            expected_contact_point_from_center.y = pipe_center.y + sin_values[finger] * pipe_radius;
 
-            // Vector from pipe center estimate to the original contact point
-            point v_original_contact_point{0, 0};
-            v_original_contact_point.x = contact_point.x - pipe_center_estimate.x;
-            v_original_contact_point.y = contact_point.y - pipe_center_estimate.y;
+            // Translate so that it is aligned with pipe center
+            expected_contact_point_from_center.x -= offset_vector.x;
+            expected_contact_point_from_center.y -= offset_vector.y;
 
-            // Calculate the angle between the two vectors using dot product
-            double dot_product = v_expected_contact_point.x * v_original_contact_point.x + v_expected_contact_point.y * v_original_contact_point.y;
-            double angle = acos(dot_product / (calculate_distance({0, 0}, v_expected_contact_point) * calculate_distance({0, 0}, v_original_contact_point)));
+            // Asıl okuduğum değer
+            double reading_distance_from_tool_center = readings[depth][finger].distance;
 
-            // Translate the point we want to rotate to the origin as pipe center estimate
-            point v_original_contact_point_translated{0, 0};
-            v_original_contact_point_translated.x = v_original_contact_point.x - pipe_center_estimate.x;
-            v_original_contact_point_translated.y = v_original_contact_point.y - pipe_center_estimate.y;
+            double expected_distance_from_pipe_center = calculate_distance(expected_contact_point_from_center, pipe_center);
+            // Asıl okuduğum değer, bu değerden ne kadar az veya çok?
+            double difference = reading_distance_from_tool_center - expected_distance_from_pipe_center;
 
-            // Rotate the point
-            point v_original_contact_point_rotated{0, 0};
-            v_original_contact_point_rotated.x = v_original_contact_point_translated.x * cos(angle) - v_original_contact_point_translated.y * sin(angle);
-            v_original_contact_point_rotated.y = v_original_contact_point_translated.x * sin(angle) + v_original_contact_point_translated.y * cos(angle);
-
-            // Without translating back, we cna calculate from the origin
-            // It is the same distance.
-            double distance = calculate_distance({0, 0}, v_original_contact_point_rotated);
-            readings[depth][finger].centralized_distance = distance;
+            // Update reading
+            readings[depth][finger].centralized_distance = expected_distance_from_pipe_center - difference;
             readings[depth][finger].is_centralized = true;
         }
     }
@@ -219,13 +191,14 @@ void mit::show_readings(bool show_centralized_readings)
 
     if (show_centralized_readings)
     {
-        cout << "(depth, finger) = old reading -> new reading" << endl;
         for (size_t depth = 0; depth < readings.size(); depth++)
         {
+            cout << "Depth / Distance from first sample: " << depth * distance_between_samples_mm << " mm" << endl;
             for (size_t finger = 0; finger < readings[0].size(); finger++)
             {
-                cout << "(" << depth << ", " << finger << ") = " << readings[depth][finger].distance << " -> " << readings[depth][finger].centralized_distance << endl;
+                cout << readings[depth][finger].distance << " -> " << readings[depth][finger].centralized_distance << endl;
             }
+            cout << "---------------------" << endl;
         }
     }
     else
@@ -233,17 +206,12 @@ void mit::show_readings(bool show_centralized_readings)
         cout << "(depth, finger) = old reading" << endl;
         for (size_t depth = 0; depth < readings.size(); depth++)
         {
+            cout << "Depth / Distance from first sample: " << depth * distance_between_samples_mm << " mm" << endl;
             for (size_t finger = 0; finger < readings[0].size(); finger++)
             {
-                cout << "(" << depth << ", " << finger << ") = " << readings[depth][finger].distance << endl;
+                cout << readings[depth][finger].distance << endl;
             }
+            cout << "---------------------" << endl;
         }
     }
-}
-
-double mit::calculate_distance(point a, point b)
-{
-    double dx = b.x - a.x;
-    double dy = b.y - a.y;
-    return sqrt(dx * dx + dy * dy);
 }
