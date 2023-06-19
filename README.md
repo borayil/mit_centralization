@@ -1,12 +1,12 @@
-# README.md
+# MIT Centralization Challenge
 
-## How To Build
+### Build
 
 ```
 g++ -std=c++11 -Wall -Wextra -o program.out *.cpp
 ```
 
-## How To Run
+### Run
 
 on Linux or Mac
 
@@ -20,21 +20,26 @@ on Windows
 program.exe
 ```
 
-## Approach
+### Explanation of offset calculation
 
-For interactive demonstration of approach and offset calculation, please visit the following link which I created using GeoGebra for this challenge.
-https://www.geogebra.org/calculator/bs8amyqz
+[Offset Calculation 2D Sketch](https://www.geogebra.org/calculator/ur7apqkm)
 
-We get our contact points w.r.t ourselves (the tools center which could be anywhere within pipe).
-The contact points are evenly distributed at angles of `360 / number of fingers`.
+Since it is given that offset is the same for all samples, we can calculate the offset from a single sample using the following steps, which rely on vectors and trigonometry.
 
-Since we know the radius of the pipe, we can calculate the expected readings, expected contact points at same angles. Now we have expected contact points which we can compare to our actual readings for all the fingers at the same angles.
+1. Tool is our origin at (0, 0) and fingers are evenly distributed around the tool `2π / no_of_fingers`
+2. For each finger, we calculate the contact point from origin using reading and finger angle.
+3. For each finger, we calculate the expected contact point from origin using pipe radius and finger angle.
+4. We calculate the vector from origin to contact point.
+5. We calculate the vector from origin to expected contact point.
+6. We calculate the difference between the vectors. This gives us the offset component of each finger.
+7. The sum of these vectors divided by 2 is the offset of the tool from the center of the pipe. We divide by 2 to average the pull and push components of the offset. Some readings will push us away from the center and some will pull us towards the center.
 
-We calculate the difference between the vectors.
+### Explanation of centralization of readings
 
-`vector_tool_to_expected_contact_point - vector_tool_to_contact_point`
+### Code
 
-We do this for all the fingers and get a vector for each finger. This vector is the offset for each finger.
+For explanation of code, I have commented on the header files which summarizes members. We rely on the mit class, which loads, processes and saves the data.
 
-The average of these vectors is the offset for the tool from the center of the pipe.
-We can move our tool to the center of the pipe by applying this offset to the tool. We have to subtract the offset to reverse the effect of the offset.
+- `main.cpp` is the entry point of the program. It makes use of the mit class to load data, run the algorithm and save the results.
+- `mit.cpp` is the implementation of the mit class.
+- `utils.cpp` is where utilities not necessarily related to `mit` class are implemented.
