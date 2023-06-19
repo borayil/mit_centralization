@@ -147,7 +147,7 @@ void mit::calculate_contact_points()
 void mit::centralize_readings(const point offset_vector)
 {
     // When we do (0,0) - offset_vector, we basically undo the offset
-    point pipe_center_estimate{-offset_vector.x, -offset_vector.y};
+    point pipe_center_estimate{-2 * offset_vector.x, -2 * offset_vector.y};
 
     for (size_t depth = 0; depth < readings.size(); depth++)
     {
