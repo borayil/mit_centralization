@@ -146,7 +146,9 @@ void mit::calculate_contact_points()
 
 void mit::centralize_readings(const point offset_vector)
 {
+    // When we do (0,0) - offset_vector, we basically undo the offset
     point pipe_center_estimate{-offset_vector.x, -offset_vector.y};
+
     for (size_t depth = 0; depth < readings.size(); depth++)
     {
         for (size_t finger = 0; finger < readings[0].size(); finger++)
@@ -168,7 +170,7 @@ void mit::centralize_readings(const point offset_vector)
             double dot_product = v_expected_contact_point.x * v_original_contact_point.x + v_expected_contact_point.y * v_original_contact_point.y;
             double angle = acos(dot_product / (calculate_distance({0, 0}, v_expected_contact_point) * calculate_distance({0, 0}, v_original_contact_point)));
 
-            // Translate the point we want to rotate to the origin
+            // Translate the point we want to rotate to the origin as pipe center estimate
             point v_original_contact_point_translated{0, 0};
             v_original_contact_point_translated.x = v_original_contact_point.x - pipe_center_estimate.x;
             v_original_contact_point_translated.y = v_original_contact_point.y - pipe_center_estimate.y;
