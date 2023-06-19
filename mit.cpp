@@ -163,16 +163,15 @@ void mit::centralize_readings(const point offset_vector)
             point vector_from_pipe_center_to_contact_point{contact_point.x - pipe_center_estimate.x, contact_point.y - pipe_center_estimate.y};
             // Vector from pipe center to expected reading contact point
             point vector_from_pipe_center_to_expected_contact_point{expected_contact_point.x - pipe_center_estimate.x, expected_contact_point.y - pipe_center_estimate.y};
-            // Calculate the angle between the two vectors
+            // Calculate the counterclockwise angle between the two vectors
             double angle = atan2(vector_from_pipe_center_to_expected_contact_point.y, vector_from_pipe_center_to_expected_contact_point.x) - atan2(vector_from_pipe_center_to_contact_point.y, vector_from_pipe_center_to_contact_point.x);
             // Rotate contact_point around pipe_center_estimate by angle counter-clockwise
             point rotated_contact_point{0, 0};
             rotated_contact_point.x = vector_from_pipe_center_to_contact_point.x * cos(angle) - vector_from_pipe_center_to_contact_point.y * sin(angle);
             rotated_contact_point.y = vector_from_pipe_center_to_contact_point.x * sin(angle) + vector_from_pipe_center_to_contact_point.y * cos(angle);
-            // Add offset vector to the rotated contact point
 
             // Calculate the distance between the rotated contact point and the pipe center
-            double centralized_distance = calculate_distance(pipe_center_estimate, rotated_contact_point);
+            double centralized_distance = calculate_distance({0, 0}, rotated_contact_point);
             readings[depth][finger].centralized_distance = centralized_distance;
             readings[depth][finger].is_centralized = true;
         }
