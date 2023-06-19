@@ -147,12 +147,12 @@ void mit::centralize_readings(const point offset_vector)
             expected_contact_point_from_center.x -= offset_vector.x;
             expected_contact_point_from_center.y -= offset_vector.y;
 
-            // Asıl okuduğum değer
+            // Finger distance correction
             double reading_distance_from_tool_center = readings[depth][finger].distance;
 
             double expected_distance_from_pipe_center = calculate_distance(expected_contact_point_from_center, pipe_center);
-            // Asıl okuduğum değer, bu değerden ne kadar az veya çok?
-            double difference = reading_distance_from_tool_center - expected_distance_from_pipe_center;
+            // double difference = reading_distance_from_tool_center - expected_distance_from_pipe_center;
+            double difference = expected_distance_from_pipe_center - reading_distance_from_tool_center;
 
             // Update reading
             readings[depth][finger].centralized_distance = expected_distance_from_pipe_center - difference;
