@@ -171,7 +171,7 @@ void mit::centralize_readings(const point offset_vector)
             rotated_contact_point.y = vector_from_pipe_center_to_contact_point.x * sin(angle) + vector_from_pipe_center_to_contact_point.y * cos(angle);
 
             // Calculate the distance between the rotated contact point and the pipe center
-            double centralized_distance = calculate_distance({0, 0}, rotated_contact_point);
+            double centralized_distance = calculate_distance(pipe_center_estimate, rotated_contact_point);
             readings[depth][finger].centralized_distance = centralized_distance;
             readings[depth][finger].is_centralized = true;
         }
