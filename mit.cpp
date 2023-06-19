@@ -154,29 +154,35 @@ void mit::centralize_readings(const point offset_vector)
         {
             // Original reading contact point w.r.t. tool at (0, 0)
             point contact_point = readings[depth][finger].contact_point;
-            // Expected reading contact point from pipe estimate
-            point expected_contact_point{cos_values[finger] * pipe_radius, sin_values[finger] * pipe_radius};
 
-            // Translate everything to make it as if the pipe center is at the origin (0, 0)
-            contact_point.x -= pipe_center_estimate.x;
-            contact_point.y -= pipe_center_estimate.y;
-            expected_contact_point.x -= pipe_center_estimate.x;
-            expected_contact_point.y -= pipe_center_estimate.y;
+            // Vector from pipe center estimate to its expected contact point
+            point v_expected_contact_point{0, 0};
+            v_expected_contact_point.x = pipe_center_estimate.x + cos_values[finger] * pipe_radius;
+            v_expected_contact_point.y = pipe_center_estimate.y + sin_values[finger] * pipe_radius;
 
-            // Calculate the counterclockwise angle between the two vectors using dot product
-            double dot_product = contact_point.x * expected_contact_point.x + contact_point.y * expected_contact_point.y;
-            double contact_point_magnitude = sqrt(contact_point.x * contact_point.x + contact_point.y * contact_point.y);
-            double expected_contact_point_magnitude = sqrt(expected_contact_point.x * expected_contact_point.x + expected_contact_point.y * expected_contact_point.y);
-            double angle = acos(dot_product / (contact_point_magnitude * expected_contact_point_magnitude));
+            // Vector from pipe center estimate to the original contact point
+            point v_original_contact_point{0, 0};
+            v_original_contact_point.x = contact_point.x - pipe_center_estimate.x;
+            v_original_contact_point.y = contact_point.y - pipe_center_estimate.y;
 
-            // Calculate the distance between the two vectors using law of cosines
-            double distance = sqrt(contact_point_magnitude * contact_point_magnitude + expected_contact_point_magnitude * expected_contact_point_magnitude - 2 * contact_point_magnitude * expected_contact_point_magnitude * cos(angle));
+            // Calculate the angle between the two vectors using dot product
+            double dot_product = v_expected_contact_point.x * v_original_contact_point.x + v_expected_contact_point.y * v_original_contact_point.y;
+            double angle = acos(dot_product / (calculate_distance({0, 0}, v_expected_contact_point) * calculate_distance({0, 0}, v_original_contact_point)));
 
-            // Calculate the new reading distance
-            double new_reading_distance = readings[depth][finger].distance - distance;
+            // Translate the point we want to rotate to the origin
+            point v_original_contact_point_translated{0, 0};
+            v_original_contact_point_translated.x = v_original_contact_point.x - pipe_center_estimate.x;
+            v_original_contact_point_translated.y = v_original_contact_point.y - pipe_center_estimate.y;
 
-            // Update the reading
-            readings[depth][finger].centralized_distance = new_reading_distance;
+            // Rotate the point
+            point v_original_contact_point_rotated{0, 0};
+            v_original_contact_point_rotated.x = v_original_contact_point_translated.x * cos(angle) - v_original_contact_point_translated.y * sin(angle);
+            v_original_contact_point_rotated.y = v_original_contact_point_translated.x * sin(angle) + v_original_contact_point_translated.y * cos(angle);
+
+            // Without translating back, we cna calculate from the origin
+            // It is the same distance.
+            double distance = calculate_distance({0, 0}, v_original_contact_point_rotated);
+            readings[depth][finger].centralized_distance = distance;
             readings[depth][finger].is_centralized = true;
         }
     }
