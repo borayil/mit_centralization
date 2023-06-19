@@ -151,8 +151,7 @@ void mit::centralize_readings(const point offset_vector)
             double reading_distance_from_tool_center = readings[depth][finger].distance;
 
             double expected_distance_from_pipe_center = calculate_distance(expected_contact_point_from_center, pipe_center);
-            // double difference = reading_distance_from_tool_center - expected_distance_from_pipe_center;
-            double difference = expected_distance_from_pipe_center - reading_distance_from_tool_center;
+            double difference = reading_distance_from_tool_center - expected_distance_from_pipe_center;
 
             // Update reading
             readings[depth][finger].centralized_distance = expected_distance_from_pipe_center - difference;
@@ -183,7 +182,7 @@ void mit::save_centralized_readings(string filename)
     }
 }
 
-void mit::show_readings(bool show_centralized_readings)
+void mit::show_readings(const bool show_centralized_readings)
 {
     // Format: (depth, finger) = old reading -> new reading
     cout << fixed;
