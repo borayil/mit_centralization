@@ -189,39 +189,6 @@ void mit::centralize_readings(const point offset_vector)
     }
 }
 
-void mit::centralize_readings_2(const point offset_vector)
-{
-    point pipe_center_estimate{-offset_vector.x, -offset_vector.y};
-    for (size_t depth = 0; depth < readings.size(); depth++)
-    {
-        for (size_t finger = 0; finger < readings[0].size(); finger++)
-        {
-            // Original reading contact point w.r.t. tool at (0, 0)
-            point contact_point = readings[depth][finger].contact_point;
-
-            // Vector from pipe center estimate to its expected contact point
-            point v_expected_contact_point{0, 0};
-            v_expected_contact_point.x = pipe_center_estimate.x + cos_values[finger] * pipe_radius;
-            v_expected_contact_point.y = pipe_center_estimate.y + sin_values[finger] * pipe_radius;
-
-            // Move contact_point to expected contact point
-            point v_contact_to_expected{0, 0};
-            v_contact_to_expected.x = v_expected_contact_point.x - contact_point.x;
-            v_contact_to_expected.y = v_expected_contact_point.y - contact_point.y;
-
-            // Add vector to contact point
-            point v_new_contact_point{0, 0};
-            v_new_contact_point.x = contact_point.x + v_contact_to_expected.x;
-            v_new_contact_point.y = contact_point.y + v_contact_to_expected.y;
-
-            // Calculate distance
-            double distance = calculate_distance(pipe_center_estimate, v_new_contact_point);
-            readings[depth][finger].centralized_distance = distance;
-            readings[depth][finger].is_centralized = true;
-        }
-    }
-}
-
 void mit::save_centralized_readings(string filename)
 {
     ofstream outputFile(filename);

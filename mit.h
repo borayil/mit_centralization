@@ -48,9 +48,8 @@ public:
     point calculate_offset_vector_of_sample(const int depth);   // Calculate offset vector of tool from the center of the pipe
     void calculate_contact_points();                            // Calculate contact points of each finger
     void centralize_readings(const point offset_vector);        // Centralize readings with given tool offset
-    void centralize_readings_2(const point offset_vector);
-    void show_readings(const bool show_centralized_readings); // Show initial and centralized readings
-    double calculate_distance(const point a, const point b);  // Calculate distance between two points
+    void show_readings(const bool show_centralized_readings);   // Show initial and centralized readings
+    double calculate_distance(const point a, const point b);    // Calculate distance between two points
 };
 
 #endif // __CALIPER_TOOL_H__
