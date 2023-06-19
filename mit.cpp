@@ -84,10 +84,10 @@ void mit::load_readings(string filename)
         clog << "* Loaded readings from " << filename << endl;
 
         double angle_increment = 2 * M_PI / no_of_fingers;
-
+        double angle = 0;
         for (int finger = 0; finger < no_of_fingers; finger++)
         {
-            double angle = finger * angle_increment;
+            angle = finger * angle_increment;
             cos_values.push_back(cos(angle));
             sin_values.push_back(sin(angle));
         }
@@ -136,11 +136,9 @@ void mit::calculate_contact_points()
     {
         for (size_t finger = 0; finger < readings[0].size(); finger++)
         {
-            double cos_value = cos_values[finger];
-            double sin_value = sin_values[finger];
             point contact_point{0, 0};
-            contact_point.x = cos_value * readings[depth][finger].distance;
-            contact_point.y = sin_value * readings[depth][finger].distance;
+            contact_point.x = cos_values[finger] * readings[depth][finger].distance;
+            contact_point.y = sin_values[finger] * readings[depth][finger].distance;
             readings[depth][finger].contact_point = contact_point;
         }
     }
