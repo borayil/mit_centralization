@@ -146,51 +146,32 @@ void mit::calculate_contact_points()
     }
 }
 
-// void mit::centralize_readings(const point offset_vector)
-// {
-//     // Calculate pipe center estimate
-//     point pipe_center_estimate;
-//     pipe_center_estimate.x = -offset_vector.x;
-//     pipe_center_estimate.y = -offset_vector.y;
-
-//     // Centralize readings
-//     for (size_t depth = 0; depth < readings.size(); depth++)
-//     {
-//         for (size_t finger = 0; finger < readings[0].size(); finger++)
-//         {
-//             point contact_point = readings[depth][finger].contact_point;
-//             readings[depth][finger].centralized_distance = calculate_distance(pipe_center_estimate, contact_point);
-//             readings[depth][finger].is_centralized = true;
-//         }
-//     }
-// }
-
 void mit::centralize_readings(const point offset_vector)
 {
-    // Offset the contact points
+    point pipe_center_estimate{-offset_vector.x, -offset_vector.y};
     for (size_t depth = 0; depth < readings.size(); depth++)
     {
         for (size_t finger = 0; finger < readings[0].size(); finger++)
         {
+            // Original reading contact point
             point contact_point = readings[depth][finger].contact_point;
-            contact_point.x += offset_vector.x;
-            contact_point.y += offset_vector.y;
-            readings[depth][finger].contact_point = contact_point;
-        }
-    }
-
-    // Calculate pipe center estimate
-    point pipe_center_estimate;
-    pipe_center_estimate.x = -offset_vector.x;
-    pipe_center_estimate.y = -offset_vector.y;
-
-    // Centralize readings
-    for (size_t depth = 0; depth < readings.size(); depth++)
-    {
-        for (size_t finger = 0; finger < readings[0].size(); finger++)
-        {
-            point contact_point = readings[depth][finger].contact_point;
-            readings[depth][finger].centralized_distance = calculate_distance(pipe_center_estimate, contact_point);
+            // Expected reading contact point
+            point expected_contact_point{pipe_center_estimate.x, pipe_center_estimate.y};
+            expected_contact_point.x = cos_values[finger] * pipe_radius;
+            expected_contact_point.y = sin_values[finger] * pipe_radius;
+            // Vector from pipe center to original reading contact point
+            point vector_from_pipe_center_to_contact_point{contact_point.x - pipe_center_estimate.x, contact_point.y - pipe_center_estimate.y};
+            // Vector from pipe center to expected reading contact point
+            point vector_from_pipe_center_to_expected_contact_point{expected_contact_point.x - pipe_center_estimate.x, expected_contact_point.y - pipe_center_estimate.y};
+            // Calculate the angle between the two vectors
+            double angle = atan2(vector_from_pipe_center_to_expected_contact_point.y, vector_from_pipe_center_to_expected_contact_point.x) - atan2(vector_from_pipe_center_to_contact_point.y, vector_from_pipe_center_to_contact_point.x);
+            // Rotate contact_point around pipe_center_estimate by angle counter-clockwise
+            point rotated_contact_point{0, 0};
+            rotated_contact_point.x = vector_from_pipe_center_to_contact_point.x * cos(angle) - vector_from_pipe_center_to_contact_point.y * sin(angle);
+            rotated_contact_point.y = vector_from_pipe_center_to_contact_point.x * sin(angle) + vector_from_pipe_center_to_contact_point.y * cos(angle);
+            // Calculate the distance between the rotated contact point and the pipe center
+            double centralized_distance = calculate_distance(pipe_center_estimate, rotated_contact_point);
+            readings[depth][finger].centralized_distance = centralized_distance;
             readings[depth][finger].is_centralized = true;
         }
     }
