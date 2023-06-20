@@ -105,8 +105,10 @@ void mit::load_readings(string filename)
 point mit::calculate_offset_vector_of_sample(const int depth)
 {
     point resultant_offset_vector{0, 0};
-    reading min_reading{0, 0, 0, false};
-    reading max_reading{0, 0, 0, false};
+    reading min_reading;
+    reading max_reading;
+    min_reading.distance = 999999;
+    max_reading.distance = -999999;
     for (size_t finger = 0; finger < readings[depth].size(); finger++)
     {
 
@@ -115,26 +117,59 @@ point mit::calculate_offset_vector_of_sample(const int depth)
         double cos_value = cos_values[finger];
         double sin_value = sin_values[finger];
 
-        point contact_point{0, 0};
-        contact_point.x = cos_value * distance;
-        contact_point.y = sin_value * distance;
-
-        // Get opposite finger readings
+        // Opposite finger readings
         int opposite_finger = (finger + no_of_fingers / 2) % no_of_fingers;
         double distance_opposite = readings[depth][opposite_finger].distance;
         double opposite_cos_value = cos_values[opposite_finger];
         double opposite_sin_value = sin_values[opposite_finger];
 
-        point opposite_contact_point{0, 0};
-        opposite_contact_point.x = opposite_cos_value * distance_opposite;
-        opposite_contact_point.y = opposite_sin_value * distance_opposite;
-
         // Compare distance and distance opposite with min and max readings.
         // Update min and max accordingly. After this loop, we will have the Lmax and Lmin
         // values for given dpth.
-    }
+        if (distance > max_reading.distance)
+        {
+            max_reading.distance = distance;
+            max_reading.finger = finger;
+            min_reading.distance = distance_opposite;
+            min_reading.finger = opposite_finger;
+            continue;
+        }
+        else if (distance_opposite > max_reading.distance)
+        {
+            max_reading.distance = distance_opposite;
+            max_reading.finger = opposite_finger;
+            min_reading.distance = distance;
+            min_reading.finger = finger;
+            continue;
+        }
 
-    return resultant_offset_vector;
+        if (distance < min_reading.distance)
+        {
+            min_reading.distance = distance;
+            min_reading.finger = finger;
+            max_reading.distance = distance_opposite;
+            max_reading.finger = opposite_finger;
+            continue;
+        }
+        else if (distance_opposite < min_reading.distance)
+        {
+            min_reading.distance = distance_opposite;
+            min_reading.finger = opposite_finger;
+            max_reading.distance = distance;
+            max_reading.finger = finger;
+            continue;
+        }
+
+        // We have our max and min readings now. Lets get the angle between contact point of this reading and axis using atan2
+        point contact_point{0, 0};
+        contact_point.x = min_reading.distance * cos_values[min_reading.finger];
+        contact_point.y = min_reading.distance * sin_values[min_reading.finger];
+        double min_angle = atan2(contact_point.y, contact_point.x);
+        double xc = ((max_reading.distance - min_reading.distance) / 2) * cos(min_angle);
+        double yc = ((max_reading.distance - min_reading.distance) / 2) * sin(min_angle);
+        // (xc,yc) is the position of the tool center at this depth at its offset.
+        return {xc, yc};
+    }
 }
 
 void mit::centralize_readings(const point offset_vector)
@@ -146,6 +181,19 @@ void mit::centralize_readings(const point offset_vector)
     {
         for (size_t finger = 0; finger < readings[0].size(); finger++)
         {
+            // Create vectors to the contact point of the finger
+            point v_contact_point{0, 0};
+            v_contact_point.x = readings[depth][finger].distance * cos_values[finger];
+            v_contact_point.y = readings[depth][finger].distance * sin_values[finger];
+
+            // Add offset vector to contact point vector to get the new contact point vector
+            point new_contact_point{0, 0};
+            new_contact_point.x = pipe_center.x + v_contact_point.x + offset_vector.x;
+            new_contact_point.y = pipe_center.y + v_contact_point.y + offset_vector.y;
+
+            // Calculate the new distance from the new contact point vector
+            readings[depth][finger].distance = calculate_distance(pipe_center, new_contact_point);
+            readings[depth][finger].is_centralized = true;
         }
     }
 }
@@ -159,7 +207,7 @@ void mit::save_centralized_readings(string filename)
         {
             for (size_t finger = 0; finger < readings[0].size(); finger++)
             {
-                outputFile << readings[depth][finger].centralized_distance << " ";
+                outputFile << readings[depth][finger].distance << " ";
             }
             outputFile << endl;
         }
@@ -172,35 +220,20 @@ void mit::save_centralized_readings(string filename)
     }
 }
 
-void mit::show_readings(const bool show_centralized_readings)
+void mit::show_readings()
 {
     // Format: (depth, finger) = old reading -> new reading
     cout << fixed;
     // Show header
 
-    if (show_centralized_readings)
+    cout << "(depth, finger) = old reading" << endl;
+    for (size_t depth = 0; depth < readings.size(); depth++)
     {
-        for (size_t depth = 0; depth < readings.size(); depth++)
+        cout << "Depth / Distance from first sample: " << depth * distance_between_samples_mm << " mm" << endl;
+        for (size_t finger = 0; finger < readings[0].size(); finger++)
         {
-            cout << "Depth / Distance from first sample: " << depth * distance_between_samples_mm << " mm" << endl;
-            for (size_t finger = 0; finger < readings[0].size(); finger++)
-            {
-                cout << readings[depth][finger].distance << " -> " << readings[depth][finger].centralized_distance << endl;
-            }
-            cout << "---------------------" << endl;
+            cout << readings[depth][finger].distance << endl;
         }
-    }
-    else
-    {
-        cout << "(depth, finger) = old reading" << endl;
-        for (size_t depth = 0; depth < readings.size(); depth++)
-        {
-            cout << "Depth / Distance from first sample: " << depth * distance_between_samples_mm << " mm" << endl;
-            for (size_t finger = 0; finger < readings[0].size(); finger++)
-            {
-                cout << readings[depth][finger].distance << endl;
-            }
-            cout << "---------------------" << endl;
-        }
+        cout << "---------------------" << endl;
     }
 }

@@ -25,7 +25,6 @@ struct reading
 {
     int finger;                  // Finger number
     double distance;             // Distance reading from the finger
-    double centralized_distance; // Distance reading from the finger after centralization
     bool is_centralized = false; // Flag to indicate if the reading is centralized
 };
 
@@ -49,7 +48,7 @@ public:
     point calculate_offset_vector_of_sample(const int depth);   // Calculate offset vector of tool from the center of the pipe
     void calculate_contact_points();                            // Calculate contact points of each finger
     void centralize_readings(const point offset_vector);        // Centralize readings with given tool offset
-    void show_readings(const bool show_centralized_readings);   // Show initial and centralized readings
+    void show_readings();                                       // Show initial and centralized readings
 };
 
 #endif // __CALIPER_TOOL_H__
