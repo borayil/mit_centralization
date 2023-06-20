@@ -101,26 +101,32 @@ void mit::load_readings(string filename)
 
 point mit::calculate_offset_vector_of_sample(const int depth)
 {
-    point result_offset_vector{0, 0};
-    double max_distance = 0;
-    double min_distance = 1000000000;
+    point resultant_offset_vector{0, 0};
     for (size_t finger = 0; finger < readings[depth].size(); finger++)
     {
         double cos_value = cos_values[finger];
         double sin_value = sin_values[finger];
 
-        // Get corresponding cos and sin_value of the finger on the other side of the pipe
-        // so 180 degrees out of phase
-        double cos_value_opposite = cos_values[(finger + no_of_fingers / 2) % no_of_fingers];
-        double sin_value_opposite = sin_values[(finger + no_of_fingers / 2) % no_of_fingers];
+        size_t finger_opposite = (finger + no_of_fingers / 2) % no_of_fingers;
+        double cos_value_opposite = cos_values[finger_opposite];
+        double sin_value_opposite = sin_values[finger_opposite];
 
-        cout << "cos_value: " << cos_value << endl;
-        cout << "cos_value_opposite: " << cos_value_opposite << endl;
-        cout << "sin_value: " << sin_value << endl;
-        cout << "sin_value_opposite: " << sin_value_opposite << endl;
+        // Calculate vector from contact point to tool
+        point finger_vector{0, 0};
+        finger_vector.x = -1 * cos_value * readings[depth][finger].distance;
+        finger_vector.y = -1 * sin_value * readings[depth][finger].distance;
+
+        // Calculate vector from oppposite contact point to tool
+        point opposite_finger_vector{0, 0};
+        opposite_finger_vector.x = -1 * -cos_value_opposite * readings[depth][finger_opposite].distance;
+        opposite_finger_vector.y = -1 * -sin_value_opposite * readings[depth][finger_opposite].distance;
+
+        // Sum of vectors divided by 2 is the offset vector so add this to the resultant vector
+        resultant_offset_vector.x += (finger_vector.x + opposite_finger_vector.x) / 2.0;
+        resultant_offset_vector.y += (finger_vector.y + opposite_finger_vector.y) / 2.0;
     }
 
-    return result_offset_vector;
+    return resultant_offset_vector;
 }
 
 void mit::centralize_readings(const point offset_vector)
@@ -132,7 +138,6 @@ void mit::centralize_readings(const point offset_vector)
     {
         for (size_t finger = 0; finger < readings[0].size(); finger++)
         {
-
             // Expected contact point w.r.t. pipe center
             point expected_contact_point_from_center{0, 0};
             expected_contact_point_from_center.x = cos_values[finger] * pipe_radius;
@@ -149,7 +154,7 @@ void mit::centralize_readings(const point offset_vector)
             double difference = reading_distance_from_tool_center - expected_distance_from_pipe_center;
 
             // Update reading
-            readings[depth][finger].centralized_distance = expected_distance_from_pipe_center + difference;
+            readings[depth][finger].centralized_distance = expected_distance_from_pipe_center - difference;
             readings[depth][finger].is_centralized = true;
         }
     }
