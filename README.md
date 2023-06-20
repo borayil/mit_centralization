@@ -1,4 +1,4 @@
-# MIT Centralization Challenge
+# Paradigm MIT Centralization Challenge
 
 ### Build
 
