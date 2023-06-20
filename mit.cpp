@@ -62,13 +62,16 @@ void mit::load_readings(string filename)
         // Read data line by line
         while (getline(inputFile, line))
         {
+
             vector<reading> finger_readings_at_depth;
             reading r;
             double distance;
             stringstream ss(line);
+            int finger = 0;
             while (ss >> distance)
             {
-
+                r.finger = finger;
+                finger++;
                 r.distance = distance;
                 finger_readings_at_depth.push_back(r);
             }
@@ -102,28 +105,33 @@ void mit::load_readings(string filename)
 point mit::calculate_offset_vector_of_sample(const int depth)
 {
     point resultant_offset_vector{0, 0};
+    reading min_reading{0, 0, 0, false};
+    reading max_reading{0, 0, 0, false};
     for (size_t finger = 0; finger < readings[depth].size(); finger++)
     {
+
+        // Finger readings
+        double distance = readings[depth][finger].distance;
         double cos_value = cos_values[finger];
         double sin_value = sin_values[finger];
 
-        size_t finger_opposite = (finger + no_of_fingers / 2) % no_of_fingers;
-        double cos_value_opposite = cos_values[finger_opposite];
-        double sin_value_opposite = sin_values[finger_opposite];
+        point contact_point{0, 0};
+        contact_point.x = cos_value * distance;
+        contact_point.y = sin_value * distance;
 
-        // Calculate vector from contact point to tool
-        point finger_vector{0, 0};
-        finger_vector.x = -1 * cos_value * readings[depth][finger].distance;
-        finger_vector.y = -1 * sin_value * readings[depth][finger].distance;
+        // Get opposite finger readings
+        int opposite_finger = (finger + no_of_fingers / 2) % no_of_fingers;
+        double distance_opposite = readings[depth][opposite_finger].distance;
+        double opposite_cos_value = cos_values[opposite_finger];
+        double opposite_sin_value = sin_values[opposite_finger];
 
-        // Calculate vector from oppposite contact point to tool
-        point opposite_finger_vector{0, 0};
-        opposite_finger_vector.x = -1 * -cos_value_opposite * readings[depth][finger_opposite].distance;
-        opposite_finger_vector.y = -1 * -sin_value_opposite * readings[depth][finger_opposite].distance;
+        point opposite_contact_point{0, 0};
+        opposite_contact_point.x = opposite_cos_value * distance_opposite;
+        opposite_contact_point.y = opposite_sin_value * distance_opposite;
 
-        // Sum of vectors divided by 2 is the offset vector so add this to the resultant vector
-        resultant_offset_vector.x += (finger_vector.x + opposite_finger_vector.x) / 2.0;
-        resultant_offset_vector.y += (finger_vector.y + opposite_finger_vector.y) / 2.0;
+        // Compare distance and distance opposite with min and max readings.
+        // Update min and max accordingly. After this loop, we will have the Lmax and Lmin
+        // values for given dpth.
     }
 
     return resultant_offset_vector;
@@ -138,24 +146,6 @@ void mit::centralize_readings(const point offset_vector)
     {
         for (size_t finger = 0; finger < readings[0].size(); finger++)
         {
-            // Expected contact point w.r.t. pipe center
-            point expected_contact_point_from_center{0, 0};
-            expected_contact_point_from_center.x = cos_values[finger] * pipe_radius;
-            expected_contact_point_from_center.y = sin_values[finger] * pipe_radius;
-
-            // Translate so that it is aligned with pipe center
-            expected_contact_point_from_center.x += offset_vector.x;
-            expected_contact_point_from_center.y += offset_vector.y;
-
-            // Finger distance correction
-            double reading_distance_from_tool_center = readings[depth][finger].distance;
-
-            double expected_distance_from_pipe_center = calculate_distance(expected_contact_point_from_center, pipe_center);
-            double difference = reading_distance_from_tool_center - expected_distance_from_pipe_center;
-
-            // Update reading
-            readings[depth][finger].centralized_distance = expected_distance_from_pipe_center - difference;
-            readings[depth][finger].is_centralized = true;
         }
     }
 }

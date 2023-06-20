@@ -23,6 +23,7 @@ struct point
 
 struct reading
 {
+    int finger;                  // Finger number
     double distance;             // Distance reading from the finger
     double centralized_distance; // Distance reading from the finger after centralization
     bool is_centralized = false; // Flag to indicate if the reading is centralized
@@ -35,6 +36,7 @@ private:
     double pipe_diameter;                       // Pipe diameter in mm
     double pipe_radius;                         // Pipe radius in mm
     double distance_between_samples_mm;         // Distance between samples (depths) in mm
+    std::vector<double> finger_angles;          // Angles of each finger
     std::vector<double> cos_values;             // Pre-calculated cos values for each finger
     std::vector<double> sin_values;             // Pre-calculated sin values for each finger
     std::vector<std::vector<reading>> readings; // Rows are samples, columns are finger readings
