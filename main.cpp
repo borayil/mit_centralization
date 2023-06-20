@@ -11,30 +11,15 @@
 #include <iostream>
 #include <vector>
 #include "mit.h"
+#include "config.h" // Configurations of tool
 using namespace std;
-
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
-static const string slash = "\\";
-#else
-static const string slash = "/";
-#endif
-
-const string PATH_TO_DATA = "data" + slash + "data.txt";
 
 int main()
 {
-
-    // Setup
-    int no_of_fingers = 40;
-    double pipe_diameter_mm = 254;
-    double distance_between_samples_mm = 5;
-    mit caliper_tool(no_of_fingers, pipe_diameter_mm, distance_between_samples_mm);
+    mit caliper_tool(NO_OF_FINGERS, PIPE_DIAMETER_MM, DISTANCE_BETWEEN_SAMPLES_MM);
     caliper_tool.load_readings(PATH_TO_DATA);
-
-    // Process && Save
     point offset_vector = caliper_tool.calculate_offset_vector_of_sample(0);
     caliper_tool.centralize_readings(offset_vector);
-    caliper_tool.save_centralized_readings("data" + slash + "data_centralized.txt");
-
+    caliper_tool.save_centralized_readings(PATH_TO_DATA_CENTRALIZED);
     return 0;
 }
