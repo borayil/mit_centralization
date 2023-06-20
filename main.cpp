@@ -30,7 +30,7 @@ int main()
     point offset_vector = caliper_tool.calculate_offset_vector_of_sample(0);
     cout << "Tool offset vector from center of pipe: (" << offset_vector.x << ", " << offset_vector.y << ")" << endl;
     caliper_tool.centralize_readings(offset_vector);
-    caliper_tool.show_readings(true);
+    // caliper_tool.show_readings(true);
     caliper_tool.save_centralized_readings("data" + slash + "data_centralized.txt");
 
     return 0;
