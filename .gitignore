@@ -3,6 +3,15 @@
 
 *.out
 
+*.png
+
+
+*.gif
+
+visualization/*
+
+output/*
+
 # Prerequisites
 *.d
 
@@ -35,3 +44,5 @@
 *.exe
 *.out
 *.app
+
+!data.txt

@@ -24,10 +24,8 @@ struct point
 struct reading
 {
     double distance;             // Distance reading from the finger
-    point contact_point;         // Contact point w.r.t. the tool
     double centralized_distance; // Distance reading from the finger after centralization
     bool is_centralized = false; // Flag to indicate if the reading is centralized
-    // double angle;             // Angle of the finger w.r.t. the center of the pipe
 };
 
 class mit
