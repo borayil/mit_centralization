@@ -102,28 +102,23 @@ void mit::load_readings(string filename)
 point mit::calculate_offset_vector_of_sample(const int depth)
 {
     point result_offset_vector{0, 0};
+    double max_distance = 0;
+    double min_distance = 1000000000;
     for (size_t finger = 0; finger < readings[depth].size(); finger++)
     {
         double cos_value = cos_values[finger];
         double sin_value = sin_values[finger];
-        point expected_contact_point{0, 0};
-        expected_contact_point.x = cos_value * pipe_radius;
-        expected_contact_point.y = sin_value * pipe_radius;
 
-        point actual_contact_point{0, 0};
-        double reading_distance = readings[depth][finger].distance;
-        actual_contact_point.x = cos_value * reading_distance;
-        actual_contact_point.y = sin_value * reading_distance;
+        // Get corresponding cos and sin_value of the finger on the other side of the pipe
+        // so 180 degrees out of phase
+        double cos_value_opposite = cos_values[(finger + no_of_fingers / 2) % no_of_fingers];
+        double sin_value_opposite = sin_values[(finger + no_of_fingers / 2) % no_of_fingers];
 
-        point diff_vector{0, 0};
-        diff_vector.x = actual_contact_point.x - expected_contact_point.x;
-        diff_vector.y = actual_contact_point.y - expected_contact_point.y;
-
-        result_offset_vector.x += diff_vector.x;
-        result_offset_vector.y += diff_vector.y;
+        cout << "cos_value: " << cos_value << endl;
+        cout << "cos_value_opposite: " << cos_value_opposite << endl;
+        cout << "sin_value: " << sin_value << endl;
+        cout << "sin_value_opposite: " << sin_value_opposite << endl;
     }
-    result_offset_vector.x /= no_of_fingers;
-    result_offset_vector.y /= no_of_fingers;
 
     return result_offset_vector;
 }
