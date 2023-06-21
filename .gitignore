@@ -9,6 +9,7 @@ vscode/
 
 *.gif
 
+.vscode/
 
 program 
 
