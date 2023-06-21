@@ -13,8 +13,6 @@ vscode/
 
 program 
 
-visualization/*
-
 output/*
 
 # Prerequisites
