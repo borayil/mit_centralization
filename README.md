@@ -20,9 +20,7 @@ on Windows
 program.exe
 ```
 
-### Explanation of offset calculation
-
-### Explanation of centralization of readings
+### Offset calculation and centralization
 
 ### Code
 
