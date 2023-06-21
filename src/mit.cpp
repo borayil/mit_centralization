@@ -2,7 +2,7 @@
  * File: main.cpp
  * Author: Bora Yilmaz
  * Email: borayil00@gmail.com
- * Description: This file contains the implementation of the MIT class.
+ * Description: This file contains the implementation of the MIT class. See mit.h for general overview
  */
 #include "mit.h"
 using namespace std;
@@ -20,10 +20,10 @@ mit::mit(const int no_of_fingers,
     assert(pipe_diameter_mm > 0);            // Pipe diameter should be positive
     assert(distance_between_samples_mm > 0); // Distance between samples should be positive
 
-    clog << "* Initialized a new MIT with " << no_of_fingers << " fingers, "
-         << pipe_diameter_mm << " mm pipe diameter, "
-         << pipe_radius << " mm pipe radius and "
-         << distance_between_samples_mm << " mm distance between samples" << endl;
+    clog << "* Initialized MIT: " << no_of_fingers << " fingers, "
+         << pipe_diameter_mm << "mm pipe diameter, "
+         << pipe_radius << "mm pipe radius and "
+         << distance_between_samples_mm << "mm distance between samples" << endl;
 }
 
 void mit::load_readings(const string filename)
@@ -47,16 +47,18 @@ void mit::load_readings(const string filename)
         int finger = 0;
         while (ss >> distance)
         {
+            assert(distance >= 0); // Distance should be positive
             r.finger = finger;
             finger++;
             r.distance = distance;
             finger_readings_at_depth.push_back(r);
         }
         readings.push_back(finger_readings_at_depth);
-        assert(finger >= no_of_fingers); // Ensure that we have enough readings
+        assert(finger >= no_of_fingers); // Ensure that we have enough readings for this line
     }
     inputFile.close();
     assert((double)no_of_fingers == readings[0].size());
+    assert(readings.size() > 0);
     clog << "* Loaded readings successfully from " << filename << endl;
 
     precalculate_cos_sin_values(no_of_fingers, cos_values, sin_values);
@@ -106,6 +108,8 @@ point mit::calculate_offset_vector_of_sample(const size_t sample)
     double min_angle = atan2(contact_point.y, contact_point.x); // angle from min_reading finger
     double xc = ((max_reading.distance - min_reading.distance) / 2) * cos(min_angle);
     double yc = ((max_reading.distance - min_reading.distance) / 2) * sin(min_angle);
+    clog << "* Calculated offset vector (" << xc << ", " << yc << ")"
+         << " @" << sample << endl;
     return {xc, yc}; // position of the tool w.r.t. (0,0) (center of the pipe)
 }
 
@@ -127,6 +131,7 @@ void mit::centralize_readings(const point offset_vector)
             readings[depth][finger].is_centralized = true;
         }
     }
+    clog << "* Centralized readings successfully" << endl;
 }
 
 void mit::save_centralized_readings(const string filename)
