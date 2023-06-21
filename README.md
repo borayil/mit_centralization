@@ -60,6 +60,7 @@ For explanation of code, I have commented on the header files which summarizes m
 
 - `main.cpp` entry point of the program and solution. It makes use of the class implemented to load data, run the algorithm and save the results. The main function is here
 - `mit` implementation of the mit class.
+- `config` configuration file for the program. It contains the number of fingers, the expected radius of the pipe, distance between samples and the file paths. Also, the slash is defined here to be used in file paths.
 - `utils` utility and helper functions
 
 ### Results
