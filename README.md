@@ -1,4 +1,4 @@
-# Paradigm MIT Centralization Challenge
+# MIT Centralization
 
 ### Build
 
@@ -24,7 +24,7 @@ program.exe
 
 Transformed data will be saved in `data/transformed_data.txt` after running the program.
 
-### Visualize
+### Visualize
 
 I implemented plotting to see how the data is being transformed and how to make sense of it. To visualize the results, go into the `visualization` directory. Running the python scripts
 
@@ -35,9 +35,9 @@ python gif.py
 
 will generate visualizations within `visualization/images`.
 
-### Problem
+### Problem
 
-Given MIT configuration and pipe radius readings, find the offset of the tool from the center of the pipe and centralize the reading distances by re-calculating the distances to the contact points as if they started from the pipe center. Without centralization, the readings are not relative to the pipe center, and thus the readings are not accurate / meaningful.
+Given MIT configuration and pipe radius readings, find the offset of the tool from the center of the pipe and centralize the reading distances by re-calculating the distances to the contact points as if they started from the pipe center. Without centralization, the readings are not relative to the pipe center, and thus the readings are not accurate / meaningful. Current data set provided is for a MIT with 40 fingers, 254mm pipe diameter and 5mm difference between samples. Each line is a sample with readings from all fingers in same order throughout samples.
 
 ### Offset calculation and centralization
 
