@@ -1,5 +1,7 @@
 # MIT Centralization
 
+![3d](https://github.com/borayil/mit_centralization/assets/56681820/d6603af3-bc43-41d9-9927-0ef177da286f)
+
 ### Build
 
 In the `src` directory
