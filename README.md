@@ -1,4 +1,4 @@
-# MIT Centralization
+# MIT (Multifinger Imaging Tool) Centralization
 
 ![3d](https://github.com/borayil/mit_centralization/assets/56681820/6a3be640-b8a5-4fe7-ae9b-eaf672fbbc2d)
 
